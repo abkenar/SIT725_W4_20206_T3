@@ -3,21 +3,24 @@ var express = require("express")
 var cors = require("cors")
 var app = express()
 const MongoClient = require('mongodb').MongoClient;
-let projectCollection;
+let petCollection;
 
 // Database Connection
 
 const uri = process.env.MONGO_URI // replace it with the url you get from mongo atlas
-const client = new MongoClient(uri,{ useNewUrlParser: true })
+const client = new MongoClient(uri, { useNewUrlParser: true })
 
-app.use(express.static(__dirname+'/public'))
+app.use(express.static(__dirname + '/public'))
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors())
 
+//old implementation of createCollection   
+/*
 const createColllection = (collectionName) => {
     client.connect((err,db) => {
         projectCollection = client.db().collection(collectionName);
+        //projectCollection = client.db("sit725").collection(collectionName);
         if(!err) {
             console.log('MongoDB Connected')
         }
@@ -27,6 +30,24 @@ const createColllection = (collectionName) => {
         }
     })
 }
+*/
+
+const createCollection = async (collectionName) => {
+    try {
+        await client.connect();
+
+        petCollection = client
+            .db("sit725")
+            .collection(collectionName);
+
+        console.log("MongoDB Connected");
+    } catch (err) {
+        console.error("DB Error:", err);
+        process.exit(1);
+    }
+};
+
+
 
 const cardList = [
     {
@@ -43,36 +64,38 @@ const cardList = [
     }
 ]
 
-const insertProjects = (project,callback) => {
-    projectCollection.insert(project,callback);
+const insertPets = (pet, callback) => {
+    petCollection.insert(pet, callback);
 }
 
-const getProjects = (callback) => {
-    projectCollection.find({}).toArray(callback);
+const getPets = (callback) => {
+    petCollection.find({}).toArray(callback);
 }
 
-app.get('/api/projects',(req,res) => {
-    getProjects((err,result) => {
-        if(err) {
-            res.json({statusCode: 400, message: err})
+
+app.get('/api/pets', (req, res) => {
+    getPets((err, result) => {
+        if (err) {
+            res.json({ statusCode: 400, message: err })
         }
         else {
-            res.json({statusCode: 200, message:"Success", data: result})
+            res.json({ statusCode: 200, message: "Success", data: result })
         }
     })
     //res.json({statusCode: 200, data: cardList, message:"Success"})
 })
 
-app.post('/api/projects',(req,res) => {
-    console.log("New Project added", req.body)
-    var newProject = req.body;
-    //cardList.push(newProject);
-    insertProjects(newProject,(err,result) => {
-        if(err) {
-            res.json({statusCode: 400, message: err})
+
+app.post('/api/pets', (req, res) => {
+    console.log("New Pet added", req.body)
+    var newPet = req.body;
+    //cardList.push(newPet);
+    insertPets(newPet, (err, result) => {
+        if (err) {
+            res.json({ statusCode: 400, message: err })
         }
         else {
-            res.json({statusCode: 200, message:"Project Successfully added", data: result})
+            res.json({ statusCode: 200, message: "Pets Successfully added", data: result })
         }
     })
     //res.json({statusCode: 200, message:"Project Successfully added", data: newProject})
@@ -80,7 +103,31 @@ app.post('/api/projects',(req,res) => {
 
 var port = process.env.port || 3000;
 
+//old implementation of app.listen
+/*
 app.listen(port,()=>{
     console.log("App listening to: "+port);
-    createColllection("pets")
+    //createColllection("pets")
+
+    createCollection("projects");
+
 })
+*/
+
+const startServer = async () => {
+    await createCollection("pets");
+
+    // uncomment this to insert sample projects if the collection is empty
+    /*
+    if (!(await petCollection.findOne({}))) {
+        await petCollection.insertMany(cardList);
+        console.log("Sample pets inserted");
+    }
+    */
+    app.listen(port, () => {
+        console.log(`App listening on port ${port}`);
+    });
+};
+
+
+startServer();

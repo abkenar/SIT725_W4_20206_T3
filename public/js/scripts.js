@@ -25,8 +25,8 @@ const submitForm = () => {
     addProjectToApp(formData);
 }
 
-const getProjects = () => {
-    $.get('/api/projects',(response) => {
+const getPets = () => {
+    $.get('/api/pets',(response) => {
         if(response.statusCode==200){
             console.log(response)
             addCards(response.data);
@@ -58,6 +58,6 @@ $(document).ready(function(){
     $('#formSubmit').click(()=>{
         submitForm();
     })
-    getProjects();
+    getPets();
     $('.modal').modal();
   });

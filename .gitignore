@@ -105,3 +105,8 @@ dist
 
 # Package lock file
 package-lock.json
+
+.env
+.env.*
+!.env.example
+.DS_Store
